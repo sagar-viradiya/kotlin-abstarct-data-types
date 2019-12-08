@@ -2,16 +2,31 @@ import java.lang.IllegalArgumentException
 import java.util.*
 import kotlin.collections.HashSet
 
+/**
+ * Utility lnline function to initialize graph
+ * @param init A lambda with receiver on Graph wrapping graph initialization.
+ * @return [Graph] object
+ */
 inline fun <T> Graph(init: Graph<T>.() -> Unit): Graph<T> {
     return Graph<T>().apply(init)
 }
 
+/**
+ * A class representing graph Data structure.
+ */
 class Graph<T> {
 
+    /**
+     * A data class representing graph node.
+     */
     data class Node<T>(val value: T)
-    private class AdjacentNode<T>(val node: Node<T>, val weight: Int)
+
+    /**
+     * A class representing graph edge.
+     */
     class Edge<T>(val source: Node<T>, val destination: Node<T>, val weight: Int = 1)
 
+    private class AdjacentNode<T>(val node: Node<T>, val weight: Int)
     private val adjacencyList = hashMapOf<Node<T>, HashSet<AdjacentNode<T>>>()
 
     fun addEdge(edge: Edge<T>) {
@@ -40,6 +55,52 @@ class Graph<T> {
 
     fun edges(edges: List<Edge<T>>) = addEdges(edges)
 
+    /*
+        Breadth first search
+     */
+    fun BFS(source: Node<T>, node: Node<T>): Boolean {
+        val visitedNode = mutableSetOf<Node<T>>()
+        val queue = ArrayDeque<Node<T>>()
+        queue.add(source)
+        var tempNode: Node<T>
+        while (queue.isNotEmpty()) {
+            tempNode = queue.remove()
+            if (visitedNode.contains(tempNode)) continue
+            if (tempNode == node) return true
+            visitedNode.add(tempNode)
+            queue.addAll(adjacencyList[tempNode]!!.map { it.node })
+        }
+        return false
+    }
+
+    /*
+        Depth first search
+     */
+    fun DFS(source: Node<T>, node: Node<T>, visitedNode: MutableSet<Node<T>> = mutableSetOf()): Boolean {
+        if (visitedNode.contains(source)) return false
+        visitedNode.add(source)
+        if (source == node) return true
+        adjacencyList[source]!!.forEach {
+            if (DFS(it.node, node, visitedNode)) return true
+        }
+        return false
+    }
+
+    /*fun DFSIterative(source: Node<T>, node: Node<T>) {
+        val stack = Stack<Node<T>>()
+        val visitedNode = mutableSetOf<Node<T>>()
+        stack.push(source)
+        var tempNode: Node<T>
+        while (stack.isNotEmpty()) {
+            tempNode = stack.pop()
+            if (visitedNode.contains(tempNode)) continue
+            
+        }
+    }*/
+
+    /*
+        Single source shortest path in direct acyclic graph
+     */
     fun singleSourceShortestPathDAG(source: Node<T>): Map<Node<T>, Int> {
         val distanceTable = mutableMapOf<Node<T>, Int>()
         distanceTable[source] = 0
@@ -80,6 +141,4 @@ class Graph<T> {
         }
         sortingList.addFirst(at)
     }
-
-
 }
