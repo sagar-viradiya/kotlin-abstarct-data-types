@@ -26,7 +26,15 @@ class Graph<T> {
      */
     class Edge<T>(val source: Node<T>, val destination: Node<T>, val weight: Int = 1)
 
-    private class AdjacentNode<T>(val node: Node<T>, val weight: Int)
+    private class AdjacentNode<T>(val node: Node<T>, val weight: Int): Comparable<AdjacentNode<T>> {
+        override fun compareTo(otherNode: AdjacentNode<T>): Int {
+            return when {
+                weight > otherNode.weight -> 1
+                weight < otherNode.weight -> -1
+                else -> 0
+            }
+        }
+    }
     private val adjacencyList = hashMapOf<Node<T>, HashSet<AdjacentNode<T>>>()
 
     fun addEdge(edge: Edge<T>) {
@@ -86,17 +94,24 @@ class Graph<T> {
         return false
     }
 
-    /*fun DFSIterative(source: Node<T>, node: Node<T>) {
+    /*
+        Depth first search iterative.
+     */
+    fun DFSIterative(source: Node<T>, node: Node<T>): Boolean {
         val stack = Stack<Node<T>>()
         val visitedNode = mutableSetOf<Node<T>>()
         stack.push(source)
         var tempNode: Node<T>
         while (stack.isNotEmpty()) {
             tempNode = stack.pop()
-            if (visitedNode.contains(tempNode)) continue
-            
+            if (tempNode == node) return true
+            adjacencyList[tempNode]!!.filter { !visitedNode.contains(it.node) }.forEach {
+                stack.push(it.node)
+                visitedNode.add(it.node)
+            }
         }
-    }*/
+        return false
+    }
 
     /*
         Single source shortest path in direct acyclic graph
@@ -140,5 +155,25 @@ class Graph<T> {
             topologicalDFS(it.node, visitedNode, sortingList)
         }
         sortingList.addFirst(at)
+    }
+
+    // SSSP only for +ve weighted directed graph
+    fun dijkstraAlgo(source: Node<T>): Map<Node<T>, Int> {
+        val distanceTable = mutableMapOf<Node<T>, Int>()
+        val visitedNode = mutableSetOf<Node<T>>()
+        distanceTable[source] = 0
+        val priorityQueue = PriorityQueue<AdjacentNode<T>>()
+        priorityQueue.add(AdjacentNode(source, 0))
+        var tempNode: AdjacentNode<T>
+        while (priorityQueue.isNotEmpty()) {
+            tempNode = priorityQueue.remove()
+            if (visitedNode.contains(tempNode.node)) continue
+            visitedNode.add(tempNode.node)
+            adjacencyList[tempNode.node]?.forEach {
+                distanceTable[it.node] = minOf(distanceTable[tempNode.node]!! + it.weight, distanceTable[it.node] ?: Int.MAX_VALUE)
+                priorityQueue.add(it)
+            }
+        }
+        return distanceTable
     }
 }
